@@ -4,28 +4,58 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class onlineActivity extends AppCompatActivity {
-    private List<int[]> myList = new ArrayList<>();
 
+
+    private List<int[]> myList = new ArrayList<>();
+    private TextView player1TextView, player2TextView;
     private int [] positions = {0,0,0,0,0,0,0,0,0};
-    private int turn = 1;
+    private String turn = "";
     private int selectedBoxes = 1;
     private LinearLayout player1, player2;
     private ImageView one, two, three, four, five, six, seven, eight, nine;
+    private String uniqueID = "0";
+    private DatabaseReference dbref;
+    private boolean enemyFound = false;
+    private String enemyUniqueID = "0";
+    private String status = "matching";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_online);
+
+
+
+        String getPlayerName = getIntent().getStringExtra("playerName");
+
+        dbref = FirebaseDatabase.getInstance().getReference("path");
+//        dbref = FirebaseDatabase.getInstance("https://tictactoe-d9638-default-rtdb.firebaseio.com").getReference("path");
+        dbref.setValue(getPlayerName).addOnCompleteListener(task -> {
+            if(task.isSuccessful()){
+                Toast.makeText(this, "poszło", Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(this, "nieposzło", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         ActionBar actionBar =  getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
@@ -35,6 +65,9 @@ public class onlineActivity extends AppCompatActivity {
 
         player1 = (LinearLayout) findViewById(R.id.player1);
         player2 = (LinearLayout) findViewById(R.id.player2);
+
+        player1TextView = findViewById(R.id.player1TextView);
+        player2TextView = findViewById(R.id.player2TextView);
 
         one = findViewById(R.id.one);
         two = findViewById(R.id.two);
@@ -53,6 +86,47 @@ public class onlineActivity extends AppCompatActivity {
         myList.add(new int[]{1,4,7});
         myList.add(new int[]{2,5,8});
         myList.add(new int[]{0,4,8});
+        myList.add(new int[]{2,4,6});
+
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setCancelable(false);
+        progressDialog.setMessage("Waitin' for the enemy!!");
+        progressDialog.show();
+
+        uniqueID = String.valueOf(System.currentTimeMillis());
+
+        player1TextView.setText(getPlayerName);
+
+
+        dbref.child("conns").addValueEventListener(new ValueEventListener(){
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot){
+                if(enemyFound){
+                    if(snapshot.hasChildren()){
+                        for(DataSnapshot conns : snapshot.getChildren()){
+                            long conID = Long.parseLong(conns.getKey());
+                            int getPlayersCount = (int)conns.getChildrenCount();
+
+                            if(status.equals("waiting")){
+                                if(getPlayersCount == 2){
+                                    turn = uniqueID;
+                                    applyPlayerTurn(turn);
+                                }
+                            }
+                        }
+                    }else{
+                        String connUniqID = String.valueOf(System.currentTimeMillis());
+                        snapshot.child(connUniqID).child(uniqueID).child("player_Name").getRef().setValue(getPlayerName);
+                        status = "waiting";
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error){
+
+            }
+        });
 
         one.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -134,6 +208,16 @@ public class onlineActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void applyPlayerTurn(String playerUniqueID){
+        if(playerUniqueID.equals(uniqueID)){
+            player1.setBackgroundResource(R.drawable.myshape);
+            player2.setBackgroundResource(R.drawable.myshape1);
+        }else{
+            player1.setBackgroundResource(R.drawable.myshape1);
+            player2.setBackgroundResource(R.drawable.myshape);
+        }
     }
 
     private void action(ImageView imageView, int selectedPositions){
