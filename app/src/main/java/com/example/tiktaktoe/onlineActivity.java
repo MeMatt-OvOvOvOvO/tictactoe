@@ -29,6 +29,8 @@ public class onlineActivity extends AppCompatActivity {
     private List<int[]> myList = new ArrayList<>();
     private TextView player1TextView, player2TextView;
     private int [] positions = {0,0,0,0,0,0,0,0,0};
+    private List<String> doneBoxes = new ArrayList<>();
+    private String[] boxesSelBy = {"","","","","","","","",""};
     private String turn = "";
     private int selectedBoxes = 1;
     private LinearLayout player1, player2;
@@ -38,6 +40,8 @@ public class onlineActivity extends AppCompatActivity {
     private boolean enemyFound = false;
     private String enemyUniqueID = "0";
     private String status = "matching";
+    private String connID = "";
+    ValueEventListener turnsEventListener, wonEventListener;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,16 +108,73 @@ public class onlineActivity extends AppCompatActivity {
                 if(enemyFound){
                     if(snapshot.hasChildren()){
                         for(DataSnapshot conns : snapshot.getChildren()){
-                            long conID = Long.parseLong(conns.getKey());
+                            String conID = conns.getKey();
                             int getPlayersCount = (int)conns.getChildrenCount();
 
                             if(status.equals("waiting")){
                                 if(getPlayersCount == 2){
                                     turn = uniqueID;
                                     applyPlayerTurn(turn);
+
+                                    boolean playerFound = false;
+                                    for(DataSnapshot players : conns.getChildren()){
+                                        String getPlayerUniqueID = players.getKey();
+
+                                        if(getPlayerUniqueID.equals(uniqueID)){
+                                            playerFound = true;
+                                        }else if (playerFound){
+                                            String getEnemyName = players.child("playerName").getValue(String.class);
+                                            enemyUniqueID = players.getKey();
+                                            player2TextView.setText(getEnemyName);
+
+                                            connID = conID;
+                                            enemyFound = true;
+
+                                            dbref.child("turns").child(connID).addValueEventListener(turnsEventListener);
+                                            dbref.child("won").child(connID).addValueEventListener(wonEventListener);
+
+                                            if(progressDialog.isShowing()){
+                                                progressDialog.dismiss();
+                                            }
+
+                                            dbref.child("conns").removeEventListener(this);
+                                        }
+                                    }
+                                }
+                            }else{
+                                if(getPlayersCount == 1){
+                                    conns.child(uniqueID).child("playerName").getRef().setValue(getPlayerName);
+
+                                    for(DataSnapshot players : conns.getChildren()){
+                                        String getEnemyName = players.child("playerName").getValue(String.class);
+                                        enemyUniqueID = players.getKey();
+
+                                        turn = enemyUniqueID;
+                                        applyPlayerTurn(turn);
+
+                                        player2TextView.setText(getEnemyName);
+                                        connID = conID;
+                                        enemyFound = true;
+
+                                        dbref.child("turns").child(connID).addValueEventListener(turnsEventListener);
+                                        dbref.child("won").child(connID).addValueEventListener(wonEventListener);
+
+                                        if(progressDialog.isShowing()){
+                                            progressDialog.dismiss();
+                                        }
+
+                                        dbref.child("conns").removeEventListener(this);
+                                        break;
+                                    }
                                 }
                             }
                         }
+                        if(!enemyFound && !status.equals("waiting")){
+                            String connUniqID = String.valueOf(System.currentTimeMillis());
+                            snapshot.child(connUniqID).child(uniqueID).child("player_Name").getRef().setValue(getPlayerName);
+                            status = "waiting";
+                        }
+
                     }else{
                         String connUniqID = String.valueOf(System.currentTimeMillis());
                         snapshot.child(connUniqID).child(uniqueID).child("player_Name").getRef().setValue(getPlayerName);
@@ -128,86 +189,59 @@ public class onlineActivity extends AppCompatActivity {
             }
         });
 
-        one.setOnClickListener(new View.OnClickListener() {
+        turnsEventListener = new ValueEventListener() {
             @Override
-            public void onClick(View view) {
-                if(selectable(0)){
-                    action((ImageView) view, 0);
-                }
-            }
-        });
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot dataSnapshot : snapshot.getChildren()){
+                    if(dataSnapshot.getChildrenCount() == 2){
+                        int getBoxPos = Integer.parseInt(dataSnapshot.child("boxPos").getValue(String.class));
+                        String getPlayerID = dataSnapshot.child("playerID").getValue(String.class);
+                        if(doneBoxes.contains(String.valueOf(getBoxPos))){
+                            doneBoxes.add(String.valueOf(getBoxPos));
+                            if(getBoxPos == 1){
 
-        two.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(selectable(1)){
-                    action((ImageView) view, 1);
-                }
-            }
-        });
+                            }else if(getBoxPos == 2){
 
-        three.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(selectable(2)){
-                    action((ImageView) view, 2);
-                }
-            }
-        });
+                            }else if(getBoxPos == 3){
 
-        four.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(selectable(3)){
-                    action((ImageView) view, 3);
-                }
-            }
-        });
+                            }else if(getBoxPos == 4){
 
-        five.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(selectable(4)){
-                    action((ImageView) view, 4);
-                }
-            }
-        });
+                            }else if(getBoxPos == 5){
 
-        six.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(selectable(5)){
-                    action((ImageView) view, 5);
-                }
-            }
-        });
+                            }else if(getBoxPos == 6){
 
-        seven.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(selectable(6)){
-                    action((ImageView) view, 6);
-                }
-            }
-        });
+                            }else if(getBoxPos == 7){
 
-        eight.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(selectable(7)){
-                    action((ImageView) view, 7);
-                }
-            }
-        });
+                            }else if(getBoxPos == 8){
 
-        nine.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(selectable(8)){
-                    action((ImageView) view, 8);
+                            }else if(getBoxPos == 9){
+
+                            }
+                        }
+
+                    }
                 }
             }
-        });
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        };
+
+        wonEventListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        };
+
+
     }
 
     private void applyPlayerTurn(String playerUniqueID){
@@ -220,96 +254,11 @@ public class onlineActivity extends AppCompatActivity {
         }
     }
 
-    private void action(ImageView imageView, int selectedPositions){
-        positions[selectedPositions] = turn;
+    private void selectBox(ImageView imageView, int selBoxPos, String selByPlayer){
 
-        if(turn == 1){
-            imageView.setImageResource(R.drawable.circle);
-
-            if(playerWin()){
-
-                myDialog2 winDialog = new myDialog2(onlineActivity.this, "Player 1 has won the match", onlineActivity.this);
-                winDialog.setCancelable(false);
-                winDialog.show();
-            }
-            else if(selectedBoxes == 9){
-                myDialog2 winDialog = new myDialog2(onlineActivity.this, "Result: draw", onlineActivity.this);
-                winDialog.setCancelable(false);
-                winDialog.show();
-            }
-            else{
-                changeTurn(2);
-                selectedBoxes++;
-            }
-        }
-        else{
-            imageView.setImageResource(R.drawable.cross);
-
-            if(playerWin()){
-                myDialog2 winDialog = new myDialog2(onlineActivity.this, "Player 2 has won the match", onlineActivity.this);
-                winDialog.setCancelable(false);
-                winDialog.show();
-            }
-            else if(selectedBoxes == 9){
-                myDialog2 winDialog = new myDialog2(onlineActivity.this, "Result: draw", onlineActivity.this);
-                winDialog.setCancelable(false);
-                winDialog.show();
-            }
-            else{
-                changeTurn(1);
-                selectedBoxes++;
-            }
-        }
     }
 
-    private void changeTurn(int currTurn){
-        turn = currTurn;
-        if(turn == 1){
-            player1.setBackgroundResource(R.drawable.myshape);
-            player2.setBackgroundResource(R.drawable.myshape1);
-        }else{
-            player1.setBackgroundResource(R.drawable.myshape1);
-            player2.setBackgroundResource(R.drawable.myshape);
 
-        }
-    }
-
-    private boolean playerWin(){
-        boolean res = false;
-
-        for(int i=0;i<myList.size();i++){
-            int [] combin = myList.get(i);
-
-            if(positions[combin[0]] == turn && positions[combin[1]] == turn && positions[combin[2]] == turn){
-                res = true;
-            }
-        }
-        return res;
-    }
-
-    private boolean selectable(int position){
-        boolean res = false;
-        if(positions[position] == 0){
-            res = true;
-        }
-        return res;
-    }
-
-    public void restart(){
-        positions = new int[]{0,0,0,0,0,0,0,0,0};
-
-        turn = 1;
-        selectedBoxes = 1;
-        one.setImageResource(R.drawable.myshape2);
-        two.setImageResource(R.drawable.myshape2);
-        three.setImageResource(R.drawable.myshape2);
-        four.setImageResource(R.drawable.myshape2);
-        five.setImageResource(R.drawable.myshape2);
-        six.setImageResource(R.drawable.myshape2);
-        seven.setImageResource(R.drawable.myshape2);
-        eight.setImageResource(R.drawable.myshape2);
-        nine.setImageResource(R.drawable.myshape2);
-    }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
@@ -320,9 +269,5 @@ public class onlineActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void navigateUpTo() {
-    }
 
-    public void startActivity() {
-    }
 }
