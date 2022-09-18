@@ -7,10 +7,12 @@
         <entry key="..\:/Users/admin/AndroidStudioProjects/tiktaktoe/app/src/main/res/drawable/myshape1.xml" value="0.1135" />
         <entry key="..\:/Users/admin/AndroidStudioProjects/tiktaktoe/app/src/main/res/drawable/myshape2.xml" value="0.1545" />
         <entry key="..\:/Users/admin/AndroidStudioProjects/tiktaktoe/app/src/main/res/layout/activity_main.xml" value="0.358695652173913" />
+        <entry key="..\:/Users/admin/AndroidStudioProjects/tiktaktoe/app/src/main/res/layout/activity_my_dialog2.xml" value="0.17592592592592593" />
         <entry key="..\:/Users/admin/AndroidStudioProjects/tiktaktoe/app/src/main/res/layout/activity_name_dialog.xml" value="0.1" />
         <entry key="..\:/Users/admin/AndroidStudioProjects/tiktaktoe/app/src/main/res/layout/activity_offline.xml" value="0.5" />
         <entry key="..\:/Users/admin/AndroidStudioProjects/tiktaktoe/app/src/main/res/layout/activity_online.xml" value="0.36666666666666664" />
         <entry key="..\:/Users/admin/AndroidStudioProjects/tiktaktoe/app/src/main/res/layout/activity_player_name.xml" value="0.36666666666666664" />
+        <entry key="..\:/Users/admin/AndroidStudioProjects/tiktaktoe/app/src/main/res/layout/win_dialog.xml" value="0.36666666666666664" />
       </map>
     </option>
   </component>

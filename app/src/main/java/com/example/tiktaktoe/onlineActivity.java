@@ -36,11 +36,11 @@ public class onlineActivity extends AppCompatActivity {
     private LinearLayout player1, player2;
     private ImageView one, two, three, four, five, six, seven, eight, nine;
     private String uniqueID = "0";
-    private DatabaseReference dbref;
     private boolean enemyFound = false;
     private String enemyUniqueID = "0";
     private String status = "matching";
     private String connID = "";
+    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReferenceFromUrl("https://tictactoe-d9638-default-rtdb.firebaseio.com");
     ValueEventListener turnsEventListener, wonEventListener;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,16 +50,6 @@ public class onlineActivity extends AppCompatActivity {
 
 
         String getPlayerName = getIntent().getStringExtra("playerName");
-
-        dbref = FirebaseDatabase.getInstance().getReference("path");
-//        dbref = FirebaseDatabase.getInstance("https://tictactoe-d9638-default-rtdb.firebaseio.com").getReference("path");
-        dbref.setValue(getPlayerName).addOnCompleteListener(task -> {
-            if(task.isSuccessful()){
-                Toast.makeText(this, "poszło", Toast.LENGTH_SHORT).show();
-            }else{
-                Toast.makeText(this, "nieposzło", Toast.LENGTH_SHORT).show();
-            }
-        });
 
         ActionBar actionBar =  getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
@@ -102,10 +92,10 @@ public class onlineActivity extends AppCompatActivity {
         player1TextView.setText(getPlayerName);
 
 
-        dbref.child("conns").addValueEventListener(new ValueEventListener(){
+        databaseReference.child("conns").addValueEventListener(new ValueEventListener(){
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot){
-                if(enemyFound){
+                if(!enemyFound){
                     if(snapshot.hasChildren()){
                         for(DataSnapshot conns : snapshot.getChildren()){
                             String conID = conns.getKey();
@@ -130,14 +120,14 @@ public class onlineActivity extends AppCompatActivity {
                                             connID = conID;
                                             enemyFound = true;
 
-                                            dbref.child("turns").child(connID).addValueEventListener(turnsEventListener);
-                                            dbref.child("won").child(connID).addValueEventListener(wonEventListener);
+                                            databaseReference.child("turns").child(connID).addValueEventListener(turnsEventListener);
+                                            databaseReference.child("won").child(connID).addValueEventListener(wonEventListener);
 
                                             if(progressDialog.isShowing()){
                                                 progressDialog.dismiss();
                                             }
 
-                                            dbref.child("conns").removeEventListener(this);
+                                            databaseReference.child("conns").removeEventListener(this);
                                         }
                                     }
                                 }
@@ -156,14 +146,14 @@ public class onlineActivity extends AppCompatActivity {
                                         connID = conID;
                                         enemyFound = true;
 
-                                        dbref.child("turns").child(connID).addValueEventListener(turnsEventListener);
-                                        dbref.child("won").child(connID).addValueEventListener(wonEventListener);
+                                        databaseReference.child("turns").child(connID).addValueEventListener(turnsEventListener);
+                                        databaseReference.child("won").child(connID).addValueEventListener(wonEventListener);
 
                                         if(progressDialog.isShowing()){
                                             progressDialog.dismiss();
                                         }
 
-                                        dbref.child("conns").removeEventListener(this);
+                                        databaseReference.child("conns").removeEventListener(this);
                                         break;
                                     }
                                 }
@@ -171,13 +161,13 @@ public class onlineActivity extends AppCompatActivity {
                         }
                         if(!enemyFound && !status.equals("waiting")){
                             String connUniqID = String.valueOf(System.currentTimeMillis());
-                            snapshot.child(connUniqID).child(uniqueID).child("player_Name").getRef().setValue(getPlayerName);
+                            snapshot.child(connUniqID).child(uniqueID).child("playerName").getRef().setValue(getPlayerName);
                             status = "waiting";
                         }
 
                     }else{
                         String connUniqID = String.valueOf(System.currentTimeMillis());
-                        snapshot.child(connUniqID).child(uniqueID).child("player_Name").getRef().setValue(getPlayerName);
+                        snapshot.child(connUniqID).child(uniqueID).child("playerName").getRef().setValue(getPlayerName);
                         status = "waiting";
                     }
                 }
@@ -196,26 +186,26 @@ public class onlineActivity extends AppCompatActivity {
                     if(dataSnapshot.getChildrenCount() == 2){
                         int getBoxPos = Integer.parseInt(dataSnapshot.child("boxPos").getValue(String.class));
                         String getPlayerID = dataSnapshot.child("playerID").getValue(String.class);
-                        if(doneBoxes.contains(String.valueOf(getBoxPos))){
+                        if(!doneBoxes.contains(String.valueOf(getBoxPos))){
                             doneBoxes.add(String.valueOf(getBoxPos));
                             if(getBoxPos == 1){
-
+                                selectBox(one, getBoxPos, getPlayerID);
                             }else if(getBoxPos == 2){
-
+                                selectBox(two, getBoxPos, getPlayerID);
                             }else if(getBoxPos == 3){
-
+                                selectBox(three, getBoxPos, getPlayerID);
                             }else if(getBoxPos == 4){
-
+                                selectBox(four, getBoxPos, getPlayerID);
                             }else if(getBoxPos == 5){
-
+                                selectBox(five, getBoxPos, getPlayerID);
                             }else if(getBoxPos == 6){
-
+                                selectBox(six, getBoxPos, getPlayerID);
                             }else if(getBoxPos == 7){
-
+                                selectBox(seven, getBoxPos, getPlayerID);
                             }else if(getBoxPos == 8){
-
+                                selectBox(eight, getBoxPos, getPlayerID);
                             }else if(getBoxPos == 9){
-
+                                selectBox(nine, getBoxPos, getPlayerID);
                             }
                         }
 
@@ -232,7 +222,20 @@ public class onlineActivity extends AppCompatActivity {
         wonEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if(snapshot.hasChild("playerID")){
+                    String getWinID = snapshot.child("playerID").getValue(String.class);
+                    myDialog2 winDialog;
+                    if(getWinID.equals(uniqueID)){
+                        winDialog = new myDialog2(onlineActivity.this, "Congrats, You won!", onlineActivity.this);
+                    }else{
+                        winDialog = new myDialog2(onlineActivity.this, "Enemy won the game!", onlineActivity.this);
+                    }
+                    winDialog.setCancelable(false);
+                    winDialog.show();
 
+                    databaseReference.child("turns").child(connID).removeEventListener(turnsEventListener);
+                    databaseReference.child("won").child(connID).removeEventListener(wonEventListener);
+                }
             }
 
             @Override
@@ -241,6 +244,113 @@ public class onlineActivity extends AppCompatActivity {
             }
         };
 
+        one.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                if(!doneBoxes.contains("1") && turn.equals(uniqueID)){
+                    ((ImageView)view).setImageResource(R.drawable.cross);
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("boxPos").setValue("1");
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("playerID").setValue(uniqueID);
+                    turn = enemyUniqueID;
+                }
+            }
+        });
+
+        two.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                if(!doneBoxes.contains("2") && turn.equals(uniqueID)){
+                    ((ImageView)view).setImageResource(R.drawable.cross);
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("boxPos").setValue("2");
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("playerID").setValue(uniqueID);
+                    turn = enemyUniqueID;
+                }
+            }
+        });
+
+        three.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                if(!doneBoxes.contains("3") && turn.equals(uniqueID)){
+                    ((ImageView)view).setImageResource(R.drawable.cross);
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("boxPos").setValue("3");
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("playerID").setValue(uniqueID);
+                    turn = enemyUniqueID;
+                }
+            }
+        });
+
+        four.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                if(!doneBoxes.contains("4") && turn.equals(uniqueID)){
+                    ((ImageView)view).setImageResource(R.drawable.cross);
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("boxPos").setValue("4");
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("playerID").setValue(uniqueID);
+                    turn = enemyUniqueID;
+                }
+            }
+        });
+
+        five.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                if(!doneBoxes.contains("5") && turn.equals(uniqueID)){
+                    ((ImageView)view).setImageResource(R.drawable.cross);
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("boxPos").setValue("5");
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("playerID").setValue(uniqueID);
+                    turn = enemyUniqueID;
+                }
+            }
+        });
+
+        six.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                if(!doneBoxes.contains("6") && turn.equals(uniqueID)){
+                    ((ImageView)view).setImageResource(R.drawable.cross);
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("boxPos").setValue("6");
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("playerID").setValue(uniqueID);
+                    turn = enemyUniqueID;
+                }
+            }
+        });
+
+        seven.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                if(!doneBoxes.contains("7") && turn.equals(uniqueID)){
+                    ((ImageView)view).setImageResource(R.drawable.cross);
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("boxPos").setValue("7");
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("playerID").setValue(uniqueID);
+                    turn = enemyUniqueID;
+                }
+            }
+        });
+
+        eight.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                if(!doneBoxes.contains("8") && turn.equals(uniqueID)){
+                    ((ImageView)view).setImageResource(R.drawable.cross);
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("boxPos").setValue("8");
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("playerID").setValue(uniqueID);
+                    turn = enemyUniqueID;
+                }
+            }
+        });
+
+        nine.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                if(!doneBoxes.contains("9") && turn.equals(uniqueID)){
+                    ((ImageView)view).setImageResource(R.drawable.cross);
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("boxPos").setValue("9");
+                    databaseReference.child("turns").child(connID).child(String.valueOf(doneBoxes.size() + 1)).child("playerID").setValue(uniqueID);
+                    turn = enemyUniqueID;
+                }
+            }
+        });
 
     }
 
@@ -255,9 +365,39 @@ public class onlineActivity extends AppCompatActivity {
     }
 
     private void selectBox(ImageView imageView, int selBoxPos, String selByPlayer){
+        boxesSelBy[selBoxPos - 1] = selByPlayer;
+        if(selByPlayer.equals(uniqueID)){
+            imageView.setImageResource(R.drawable.circle);
+            turn = enemyUniqueID;
+        }else{
+            imageView.setImageResource(R.drawable.cross);
+            turn = uniqueID;
+        }
 
+        applyPlayerTurn(turn);
+
+        if(checkPlayerWin(selByPlayer)){
+            databaseReference.child("won").child(connID).child("playerID").setValue(selByPlayer);
+        }
+        if(doneBoxes.size() == 9){
+            myDialog2 winDialog = new myDialog2(onlineActivity.this, "Result: Draw", onlineActivity.this);
+            winDialog.setCancelable(false);
+            winDialog.show();
+        }
     }
 
+    private boolean checkPlayerWin(String playerID){
+        boolean playerWon = false;
+
+        for(int i = 0; i < myList.size(); i++){
+            int[] combination = myList.get(i);
+
+            if(boxesSelBy[combination[0]].equals(playerID) && boxesSelBy[combination[1]].equals(playerID) && boxesSelBy[combination[2]].equals(playerID)){
+                playerWon = true;
+            }
+        }
+        return  playerWon;
+    }
 
 
     @Override
@@ -268,6 +408,7 @@ public class onlineActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
 
 
 }

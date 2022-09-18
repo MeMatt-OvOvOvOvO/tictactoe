@@ -25,14 +25,13 @@ public class myDialog2 extends Dialog {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_dialog2);
 
-        TextView text = findViewById(R.id.text);
+        TextView mess1 = findViewById(R.id.text);
+        Button back = findViewById(R.id.backk);
+        Button start = findViewById(R.id.startNeww);
 
-        Button backButton = findViewById(R.id.back);
-        Button startnew = findViewById(R.id.startNew);
+        mess1.setText(mess);
 
-        text.setText(mess);
-
-        backButton.setOnClickListener(new View.OnClickListener() {
+        back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(getContext(), MainActivity.class);
@@ -40,11 +39,12 @@ public class myDialog2 extends Dialog {
             }
         });
 
-        startnew.setOnClickListener(new View.OnClickListener() {
+        start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                onActivity.restart();
                 dismiss();
+                getContext().startActivity(new Intent(getContext(), playerName.class));
+                onActivity.finish();
             }
         });
     }
